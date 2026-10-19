@@ -1,0 +1,35 @@
+{
+  "incident_1": {
+    "incident": "Flash Surge & Card Testing",
+    "spike_multiplier": "12.5x",
+    "initial_replicas": 1,
+    "scaled_replicas": 4,
+    "max_queue_delay_us": 5000,
+    "p95_latency_during_spike_ms": 28.4,
+    "autoscaling_status": "SUCCESSFUL_HPA_SCALE_OUT",
+    "action_taken": "Automated HPA scale out + CloudWatch incident alert dispatched to SecOps"
+  },
+  "incident_2": {
+    "incident": "Covariate Shift in Transaction Streams",
+    "v14_ks_statistic": 0.737,
+    "v14_p_value": 3.0932829988697147e-264,
+    "amount_ks_statistic": 0.539,
+    "drift_detected": true,
+    "action_taken": "Automated retraining event emitted to trigger GitHub Actions retraining pipeline"
+  },
+  "incident_3": {
+    "incident": "Canary Model Promotion",
+    "traffic_split_initial": {
+      "v1": 90,
+      "v2": 10
+    },
+    "traffic_split_final": {
+      "v1": 0,
+      "v2": 100
+    },
+    "canary_pr_auc_gain": "+0.06",
+    "canary_p95_latency_ms": 22.1,
+    "error_rate": "0.00%",
+    "rollout_status": "PROMOTED_TO_PRODUCTION"
+  }
+}

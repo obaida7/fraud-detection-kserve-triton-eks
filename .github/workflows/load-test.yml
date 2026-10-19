@@ -1,0 +1,49 @@
+name: Triton Concurrency & HPA Load Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Triton Endpoint URL (ALB or ClusterIP)'
+        required: true
+        default: 'http://localhost:8000'
+      concurrency:
+        description: 'Concurrent client threads'
+        required: true
+        default: '20'
+      requests:
+        description: 'Total transaction requests'
+        required: true
+        default: '500'
+
+jobs:
+  benchmark:
+    name: Concurrency & Latency Stress Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: |
+        pip install requests numpy
+
+    - name: Run Load Test
+      run: |
+        python scripts/load_test_autoscaling.py \
+          --url ${{ github.event.inputs.target_url }} \
+          --concurrency ${{ github.event.inputs.concurrency }} \
+          --requests ${{ github.event.inputs.requests }} \
+          --output load_test_summary.json
+
+    - name: Publish Benchmark Summary
+      run: |
+        echo "### ⚡ Triton Latency & Throughput Benchmark" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+        cat load_test_summary.json >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

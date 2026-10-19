@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-detection-triton
+  namespace: default
+  labels:
+    app: fraud-detection-triton
+    tier: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fraud-detection-triton
+  template:
+    metadata:
+      labels:
+        app: fraud-detection-triton
+        tier: inference
+    spec:
+      containers:
+      - name: triton-server
+        image: nvcr.io/nvidia/tritonserver:24.08-py3
+        command: ["tritonserver"]
+        args:
+          - "--model-repository=/models"
+          - "--strict-model-config=false"
+          - "--exit-on-error=true"
+          - "--log-verbose=0"
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: grpc
+          containerPort: 8001
+          protocol: TCP
+        - name: metrics
+          containerPort: 8002
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /v2/health/live
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /v2/health/ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "4Gi"
+        volumeMounts:
+        - name: model-repository-volume
+          mountPath: /models
+      volumes:
+      - name: model-repository-volume
+        configMap:
+          name: triton-model-config

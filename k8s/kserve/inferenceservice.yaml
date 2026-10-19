@@ -1,0 +1,30 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: fraud-detection
+  namespace: default
+  annotations:
+    serving.kserve.io/autoscalerClass: hpa
+    serving.kserve.io/metric: concurrency
+    serving.kserve.io/target: "10"
+    serving.kserve.io/enable-prometheus-scraping: "true"
+    sidecar.istio.io/inject: "true"
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 5
+    scaleTarget: 10
+    scaleMetric: concurrency
+    model:
+      modelFormat:
+        name: onnx
+        version: "1"
+      protocolVersion: v2
+      storageUri: "s3://sagemaker-us-east-2-227246780492-bank-churn/triton-models/fraud_detection"
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "2000m"
+          memory: "4Gi"

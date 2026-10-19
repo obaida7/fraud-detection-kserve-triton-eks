@@ -1,0 +1,36 @@
+services:
+  triton:
+    image: nvcr.io/nvidia/tritonserver:24.08-py3
+    container_name: fraud-detection-triton
+    command: ["tritonserver", "--model-repository=/models", "--strict-model-config=false", "--log-verbose=0"]
+    ports:
+      - "8000:8000"   # HTTP REST / KServe v2
+      - "8001:8001"   # gRPC
+      - "8002:8002"   # Prometheus Metrics
+    volumes:
+      - ./model_repository:/models
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+    shm_size: '2gb'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  portal:
+    build:
+      context: .
+      dockerfile: ml-api/Dockerfile
+    container_name: fraud-portal
+    ports:
+      - "8050:8050"
+    environment:
+      - TRITON_URL=http://triton:8000
+      - MODEL_NAME=fraud_detection
+      - PORT=8050
+    depends_on:
+      triton:
+        condition: service_healthy
+    restart: unless-stopped
